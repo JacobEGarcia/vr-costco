@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>SAMPLE SHIFT // VR</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#04050a;color:#eee;font-family:Arial,Helvetica,sans-serif}canvas{display:block}
+#hud{position:fixed;inset:0;pointer-events:none;z-index:3}.top{position:absolute;left:24px;right:24px;top:20px;display:flex;justify-content:space-between;align-items:flex-start}.brand{font:900 18px/1 Arial;letter-spacing:.14em}.brand b{color:#e31837}.brand i{font-style:normal;color:#4f8fce}.meta{text-align:right;font:700 11px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.12em;color:#c7c7c7}.task{position:absolute;left:24px;bottom:24px;width:min(390px,calc(100vw - 48px));padding-top:12px;border-top:1px solid #8d8d8d;font:600 12px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.04em}.task span{color:#ff2b4a}.reticle{position:absolute;left:50%;top:50%;width:6px;height:6px;border:1px solid #fff;transform:translate(-50%,-50%) rotate(45deg);opacity:.75}.grain{position:absolute;inset:0;opacity:.06;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.7'/%3E%3C/svg%3E")}
+#intro{position:fixed;inset:0;z-index:5;display:grid;place-items:center;background:radial-gradient(circle at 50% 42%,#101623 0,#07080d 43%,#020308 80%);padding:24px}.card{width:min(640px,100%);border-top:4px solid #e31837;padding-top:24px}.eyebrow{font:700 11px ui-monospace,monospace;letter-spacing:.2em;color:#8fa3bd}.card h1{font:900 clamp(44px,10vw,88px)/.85 Arial,sans-serif;letter-spacing:-.06em;margin:18px 0 14px}.card h1 i{font-style:normal;color:#e31837}.card p{max-width:500px;color:#a9b4c4;font:14px/1.6 ui-monospace,monospace}.controls{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:25px 0}.control{border:1px solid #26303f;padding:12px;color:#c4d0de;font:11px/1.5 ui-monospace,monospace}.control b{display:block;color:#fff;letter-spacing:.08em}.buttons{display:flex;gap:10px;flex-wrap:wrap}button{pointer-events:auto;border:0;padding:14px 20px;background:#e31837;color:#fff;font:800 12px Arial;letter-spacing:.11em;cursor:pointer}button.secondary{background:#101623;border:1px solid #33415a}.fine{margin-top:15px!important;font-size:10px!important;color:#5b6472!important}.hidden{display:none!important}
+#message{position:fixed;z-index:4;left:50%;top:50%;transform:translate(-50%,-50%);padding:13px 18px;background:#050608e8;border:1px solid #e31837;font:800 12px ui-monospace,monospace;letter-spacing:.13em;opacity:0;transition:opacity .2s;pointer-events:none}.show{opacity:1!important}
+@media(max-width:540px){.controls{grid-template-columns:1fr}.top{left:14px;right:14px}.task{left:14px;bottom:14px}.card h1{font-size:50px}}
+</style>
+</head>
+<body>
+<div id="hud"><div class="top"><div class="brand">WAREHOUSE <b>CLUB</b> <i>//</i> AFTER HOURS</div><div class="meta"><div id="clock">11:53:00 PM</div><div id="score">SAMPLES 0 / 6</div></div></div><div class="reticle"></div><div class="task">CLOSING PROTOCOL 13-C<br><span>COLLECT THE SIX SAMPLE CUPS.</span> The member browsing by the freezer wall does not have a card. Do not ask to see it.</div><div class="grain"></div></div>
+<div id="message">SAMPLE COLLECTED</div>
+<div id="intro"><div class="card"><div class="eyebrow">WEBXR WAREHOUSE HORROR // QUEST 3</div><h1>SAMPLE<br><i>SHIFT</i></h1><p>11:53 PM. The pallets are wrapped, the chickens are sold out, the food court is dark. Six sample cups are still out on the floor, even though the sample ladies all clocked out at nine.</p><div class="controls"><div class="control"><b>QUEST 3</b>Left stick move · right stick turn<br>Point + trigger to collect</div><div class="control"><b>DESKTOP</b>WASD move · drag to look<br>Click a cup to collect</div></div><div class="buttons"><button id="enter">START CLOSING</button><button class="secondary" id="vr">ENTER VR</button></div><p class="fine">Original browser game. No download. Headphones recommended.</p></div></div>
+<script type="importmap">{"imports":{"three":"./1-three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x04060a);scene.fog=new THREE.FogExp2(0x04060a,.022);
+const camera=new THREE.PerspectiveCamera(72,innerWidth/innerHeight,.05,120);camera.position.set(0,1.65,16);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.0;renderer.xr.enabled=true;document.body.prepend(renderer.domElement);
+const rig=new THREE.Group();rig.add(camera);scene.add(rig);
+const red=new THREE.MeshStandardMaterial({color:0xb01230,roughness:.6,metalness:.05});
+const blue=new THREE.MeshStandardMaterial({color:0x123a66,roughness:.7});
+const steel=new THREE.MeshStandardMaterial({color:0x3c4148,roughness:.5,metalness:.55});
+const beamMat=new THREE.MeshStandardMaterial({color:0xc64a12,roughness:.55,metalness:.3});
+const dark=new THREE.MeshStandardMaterial({color:0x0e1013,roughness:.85});
+const shrink=new THREE.MeshStandardMaterial({color:0xcfd4d8,roughness:.35,metalness:.05});
+function box(n,s,p,m=dark,parent=scene){const o=new THREE.Mesh(new THREE.BoxGeometry(...s),m);o.name=n;o.position.set(...p);o.castShadow=o.receiveShadow=true;parent.add(o);return o}
+// warehouse shell: concrete floor, high ceiling
+box('floor',[34,.15,48],[0,-.08,-4],new THREE.MeshStandardMaterial({color:0x23262b,roughness:.32,metalness:.12}));
+box('ceiling',[34,.25,48],[0,9.4,-4],new THREE.MeshStandardMaterial({color:0x111318,roughness:.9}));
+box('wall L',[.3,9.5,48],[-17,4.7,-4],dark);box('wall R',[.3,9.5,48],[17,4.7,-4],dark);
+box('wall back',[34,9.5,.3],[0,4.7,-28],dark);box('wall front',[34,9.5,.3],[0,4.7,20],dark);
+// high-bay fluorescent rows, two fixtures dead-red
+for(let z=-24;z<=16;z+=8)for(const x of [-8,0,8]){
+  const deadRed=(z===-8&&x===0)||(z===8&&x===-8);
+  box('fixture',[3.4,.08,.5],[x,9.2,z],new THREE.MeshBasicMaterial({color:deadRed?0x481016:0xdfe6e2}));
+  const l=new THREE.RectAreaLight(deadRed?0xff1a38:0xdde8e0,deadRed?6:3.4,3.4,.6);l.position.set(x,9.1,z);l.rotation.x=-Math.PI/2;scene.add(l);
+  if(deadRed){const p=new THREE.PointLight(0xff0e30,10,14);p.position.set(x,7.6,z);scene.add(p)}
+  else{const p=new THREE.PointLight(0xcfdcd4,26,17,2);p.position.set(x,8.4,z);scene.add(p)}
+}
+// pallet racking rows: steel uprights, orange beams, shrink-wrapped pallets
+function rackRow(x,z0,z1){
+  for(let z=z0;z<=z1;z+=4){
+    box('upright',[.22,7.6,.9],[x-1.3,3.8,z],steel);box('upright',[.22,7.6,.9],[x+1.3,3.8,z],steel);
+    for(const y of [1.7,3.6,5.5,7.3]){box('beam',[2.9,.14,.16],[x,y,z-.42],beamMat);box('beam',[2.9,.14,.16],[x,y,z+.42],beamMat)}
+    for(const y of [1.9,3.8,5.7]){
+      if(Math.random()<.82){const pal=box('pallet',[2.2,1.35,.78],[x,y,z],Math.random()<.6?shrink:new THREE.MeshStandardMaterial({color:new THREE.Color().setHSL(Math.random(),.18,.3+Math.random()*.2),roughness:.7}));
+      if(Math.random()<.5){const cv=document.createElement('canvas');cv.width=256;cv.height=128;const c=cv.getContext('2d');c.fillStyle='#f2f0ea';c.fillRect(0,0,256,128);c.fillStyle='#123a66';c.font='900 44px Arial';c.textAlign='center';c.fillText('KIRKLAND',128,58);c.fillStyle='#b01230';c.font='700 26px Arial';c.fillText('SIGNATURE',128,96);const lab=new THREE.Mesh(new THREE.PlaneGeometry(1.5,.75),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cv)}));lab.position.set(x,y,z+.4);scene.add(lab)}}
+    }
+  }
+}
+rackRow(-14,-24,12);rackRow(-9,-24,12);rackRow(9,-24,12);rackRow(14,-24,12);
+// freezer wall along the back: glass door glow
+for(let x=-12;x<=12;x+=3){box('freezer',[2.6,4.4,.5],[x,2.2,-27.4],blue);box('freezer glass',[2.2,3.4,.06],[x,2.2,-27.1],new THREE.MeshBasicMaterial({color:0x0e2438}))}
+const freezerGlow=new THREE.PointLight(0x3f7fb8,1.6,16);freezerGlow.position.set(0,3,-25.5);scene.add(freezerGlow);
+// rotisserie warmer, right side
+box('warmer',[3.4,2.6,1.6],[13.5,1.3,14.5],steel);box('warmer glass',[3,.9,.06],[13.5,1.7,13.68],new THREE.MeshBasicMaterial({color:0x511c08}));
+for(let i=0;i<3;i++){const bird=new THREE.Mesh(new THREE.SphereGeometry(.21,12,9),new THREE.MeshStandardMaterial({color:0x7a3c14,roughness:.5}));bird.scale.set(1.35,.85,.9);bird.position.set(12.6+i*.9,1.72,14.1);scene.add(bird)}
+const warmGlow=new THREE.PointLight(0xff7a1e,2,7);warmGlow.position.set(13.5,2.4,13.9);scene.add(warmGlow);
+// food court tables + $1.50 sign, front-left
+for(const [tx,tz] of [[-11,15.5],[-7.5,15.5],[-11,17.8]]){const t=new THREE.Mesh(new THREE.CylinderGeometry(.75,.75,.06,18),new THREE.MeshStandardMaterial({color:0x8d1e2c,roughness:.6}));t.position.set(tx,1,17.6===tz?17.8:tz);t.position.z=tz;t.castShadow=t.receiveShadow=true;scene.add(t);box('table leg',[.1,1,.1],[tx,.5,tz],steel)}
+const fc=document.createElement('canvas');fc.width=512;fc.height=192;const f2=fc.getContext('2d');f2.fillStyle='#0a0c10';f2.fillRect(0,0,512,192);f2.fillStyle='#e31837';f2.font='900 84px Arial';f2.textAlign='center';f2.fillText('$1.50',256,88);f2.fillStyle='#dfe6e2';f2.font='700 30px Arial';f2.fillText('HOT DOG + SODA',256,140);const fcSign=box('food court sign',[4,1.5,.08],[-9.2,5.6,19.6],new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(fc)}));
+// membership desk + entrance gate, front
+box('desk',[3.4,1.05,1.2],[8,0.52,17.5],new THREE.MeshStandardMaterial({color:0x1a2735,roughness:.5}));
+const ms=document.createElement('canvas');ms.width=512;ms.height=128;const m2=ms.getContext('2d');m2.fillStyle='#0d1622';m2.fillRect(0,0,512,128);m2.fillStyle='#4f8fce';m2.font='900 58px Arial';m2.textAlign='center';m2.fillText('MEMBERSHIP',256,84);box('membership sign',[3.6,.9,.06],[8,3.4,17.4],new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(ms)}));
+for(let y=.15;y<6.2;y+=.32)box('gate',[6.4,.16,.05],[0,y,19.5],steel);
+const exitGlow=box('exit glow',[1.5,.5,.06],[0,6.9,19.4],new THREE.MeshBasicMaterial({color:0x5c0d1c}));
+// main wall sign
+const ws=document.createElement('canvas');ws.width=1024;ws.height=200;const w2=ws.getContext('2d');w2.fillStyle='#05060a';w2.fillRect(0,0,1024,200);w2.font='900 110px Arial';w2.textAlign='center';w2.fillStyle='#e8ecf0';w2.fillText('WAREHOUSE',400,140);w2.fillStyle='#e31837';w2.fillText('CLUB',790,140);box('wall sign',[7,1.4,.1],[0,6.6,-27.6],new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(ws)}));
+// sample stations + cursed cups
+const targets=[];const spots=[[-11.5,-20],[11.5,-13],[-11.5,-5],[11.5,3],[-4.5,8],[4.5,-1]];
+const cupLabels=['DUMPLING','GRANOLA','JUICE','TAQUITO','CHIPS','COFFEE'];
+for(let i=0;i<spots.length;i++){
+  const [x,z]=spots[i];const st=new THREE.Group();st.position.set(x,0,z);scene.add(st);
+  box('cart',[1.5,1,1.1],[0,.5,0],new THREE.MeshStandardMaterial({color:0x9aa1a8,roughness:.4,metalness:.4}),st);
+  box('cart tray',[1.6,.05,1.2],[0,1.02,0],steel,st);
+  box('cart skirt',[1.54,.5,1.14],[0,.75,0],red,st);
+  const cv=document.createElement('canvas');cv.width=256;cv.height=96;const c=cv.getContext('2d');c.fillStyle='#f2f0ea';c.fillRect(0,0,256,96);c.fillStyle='#b01230';c.font='900 34px Arial';c.textAlign='center';c.fillText('FREE SAMPLE',128,42);c.fillStyle='#123a66';c.font='700 30px Arial';c.fillText(cupLabels[i],128,80);
+  const sign=new THREE.Mesh(new THREE.PlaneGeometry(1.2,.45),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cv),side:THREE.DoubleSide}));sign.position.set(0,1.75,0);st.add(sign);box('sign post',[.04,.7,.04],[0,1.35,0],steel,st);
+  const cup=new THREE.Group();cup.position.set(0,1.12,0);
+  const cupMesh=new THREE.Mesh(new THREE.CylinderGeometry(.055,.04,.13,14),new THREE.MeshStandardMaterial({color:0xf5f2ea,roughness:.5}));cupMesh.castShadow=true;cup.add(cupMesh);
+  const fill=new THREE.Mesh(new THREE.CylinderGeometry(.048,.048,.02,12),new THREE.MeshBasicMaterial({color:0x8f1220}));fill.position.y=.055;cup.add(fill);
+  st.add(cup);cup.userData.target=true;cup.userData.index=i;targets.push(cup);
+  const glow=new THREE.PointLight(0xff2038,.55,2.4);glow.position.set(x,1.5,z);scene.add(glow);cup.userData.glow=glow;
+}
+// THE MEMBER: tall figure, red vest, no face, membership lanyard
+const member=new THREE.Group();
+const vest=new THREE.MeshStandardMaterial({color:0x8f1220,roughness:.85});
+const skin=new THREE.MeshStandardMaterial({color:0xcfc6b4,roughness:.85});
+const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.38,1.15,5,10),vest);torso.position.y=1.25;member.add(torso);
+const head=new THREE.Mesh(new THREE.SphereGeometry(.29,20,14),skin);head.scale.z=.8;head.position.y=2.35;member.add(head);
+for(const x of [-.48,.48]){const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.1,.95,4,8),vest);arm.position.set(x,1.3,0);arm.rotation.z=x<0?-.06:.06;member.add(arm)}
+const lan=new THREE.Mesh(new THREE.BoxGeometry(.12,.16,.02),new THREE.MeshBasicMaterial({color:0x4f8fce}));lan.position.set(0,1.55,.36);member.add(lan);
+member.position.set(0,0,-25.5);scene.add(member);
+// member's cart
+const mCart=new THREE.Group();box('cart basket',[.9,.5,.6],[0,.85,0],steel,mCart);box('cart handle',[.9,.05,.05],[0,1.15,.35],steel,mCart);
+for(const [wx,wz] of [[-.35,-.25],[.35,-.25],[-.35,.25],[.35,.25]]){const w=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,.04,10),dark);w.rotation.x=Math.PI/2;w.position.set(wx,.07,wz);mCart.add(w)}
+mCart.position.set(.9,0,-.4);member.add(mCart);
+// atmosphere
+scene.add(new THREE.HemisphereLight(0x8899aa,0x0b0d12,.55));
+// audio drone
+let audioStarted=false;function startAudio(){if(audioStarted)return;audioStarted=true;const ac=new AudioContext();const master=ac.createGain();master.gain.value=.05;master.connect(ac.destination);
+for(const f of [38,57,59.2]){const o=ac.createOscillator();const g=ac.createGain();o.type='sine';o.frequency.value=f;g.gain.value=.5;o.connect(g).connect(master);o.start()}
+const hum=ac.createOscillator(),hg=ac.createGain();hum.type='sawtooth';hum.frequency.value=120;hg.gain.value=.012;const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=240;hum.connect(lp).connect(hg).connect(master);hum.start();
+const lfo=ac.createOscillator(),lg=ac.createGain();lfo.frequency.value=.07;lg.gain.value=.02;lfo.connect(lg).connect(master.gain);lfo.start()}
+let found=0,started=false,yaw=0,pitch=0,drag=false,lastX=0,lastY=0,elapsed=0;const ray=new THREE.Raycaster();const mouse=new THREE.Vector2();
+function message(t){const m=document.querySelector('#message');m.textContent=t;m.classList.add('show');setTimeout(()=>m.classList.remove('show'),1100)}
+function scan(obj){if(!obj||!obj.userData.target||obj.userData.done)return;obj.userData.done=true;found++;
+  document.querySelector('#score').textContent=`SAMPLES ${found} / 6`;
+  obj.visible=false;obj.userData.glow.intensity=0;
+  message(found===6?'SHIFT COMPLETE // EXIT THROUGH THE GATE':'SAMPLE COLLECTED');
+  if(found===6){document.querySelector('.task').innerHTML='CLOSING PROTOCOL COMPLETE<br><span>LEAVE. DO NOT CHECK ITS CARD.</span>';exitGlow.material=new THREE.MeshBasicMaterial({color:0x1d8f4a})}
+}
+addEventListener('pointerdown',e=>{if(!started)return;drag=true;lastX=e.clientX;lastY=e.clientY;mouse.x=e.clientX/innerWidth*2-1;mouse.y=-(e.clientY/innerHeight)*2+1;ray.setFromCamera(mouse,camera);const hit=ray.intersectObjects(targets,true)[0];if(hit){let o=hit.object;while(o.parent&&!o.userData.target)o=o.parent;scan(o)}});
+addEventListener('pointerup',()=>drag=false);
+addEventListener('pointermove',e=>{if(!drag||renderer.xr.isPresenting)return;yaw-=(e.clientX-lastX)*.003;pitch=Math.max(-.7,Math.min(.7,pitch-(e.clientY-lastY)*.003));lastX=e.clientX;lastY=e.clientY});
+const keys={};addEventListener('keydown',e=>keys[e.code]=true);addEventListener('keyup',e=>keys[e.code]=false);
+const controllers=[];for(let i=0;i<2;i++){const c=renderer.xr.getController(i);const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),new THREE.Vector3(0,0,-10)]),new THREE.LineBasicMaterial({color:0x4f8fce,transparent:true,opacity:.55}));c.add(line);
+c.addEventListener('selectstart',()=>{ray.set(c.getWorldPosition(new THREE.Vector3()),new THREE.Vector3(0,0,-1).applyQuaternion(c.getWorldQuaternion(new THREE.Quaternion())));const h=ray.intersectObjects(targets,true)[0];if(h){let o=h.object;while(o.parent&&!o.userData.target)o=o.parent;scan(o)}});rig.add(c);controllers.push(c)}
+function begin(){document.querySelector('#intro').classList.add('hidden');started=true;startAudio()}
+document.querySelector('#enter').onclick=begin;
+document.querySelector('#vr').onclick=async()=>{begin();if(await navigator.xr?.isSessionSupported('immersive-vr')){const s=await navigator.xr.requestSession('immersive-vr',{optionalFeatures:['local-floor','bounded-floor']});renderer.xr.setSession(s)}else message('WEBXR HEADSET NOT FOUND')};
+// clamp the rig inside the warehouse
+function clampRig(){rig.position.x=Math.max(-15.5,Math.min(15.5,rig.position.x));rig.position.z=Math.max(-26.5,Math.min(19,rig.position.z))}
+renderer.setAnimationLoop((t)=>{const dt=Math.min(.04,(t-(renderer.info._last||t))/1000);renderer.info._last=t;elapsed+=dt;
+if(!renderer.xr.isPresenting){camera.rotation.order='YXZ';camera.rotation.set(pitch,yaw,0);
+const f=new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw)),r=new THREE.Vector3(Math.cos(yaw),0,Math.sin(yaw));
+if(keys.KeyW)rig.position.addScaledVector(f,dt*2.4);if(keys.KeyS)rig.position.addScaledVector(f,-dt*2.4);if(keys.KeyA)rig.position.addScaledVector(r,-dt*2.4);if(keys.KeyD)rig.position.addScaledVector(r,dt*2.4);clampRig()}
+else{const session=renderer.xr.getSession();for(const source of session?.inputSources||[]){const gp=source.gamepad;if(!gp)continue;const a=gp.axes;
+if(source.handedness==='left'){const dir=new THREE.Vector3(a[2]||0,0,a[3]||0).applyQuaternion(camera.getWorldQuaternion(new THREE.Quaternion()));dir.y=0;rig.position.addScaledVector(dir,-dt*2.2);clampRig()}
+if(source.handedness==='right'&&Math.abs(a[2]||0)>.75&&!(source._turned)){rig.rotation.y-=Math.sign(a[2])*.45;source._turned=true}else if(Math.abs(a[2]||0)<.3)source._turned=false}}
+// the member drifts closer from the freezer wall as samples are collected
+member.position.z=-25.5+Math.min(found*3.4,20.5)+Math.sin(elapsed*.5)*.12;
+member.lookAt(camera.getWorldPosition(new THREE.Vector3()).setY(1.6));
+freezerGlow.intensity=1.4+Math.sin(elapsed*6.3)*.35;
+warmGlow.intensity=1.8+Math.sin(elapsed*3.1)*.3;
+targets.forEach((g,i)=>{if(!g.userData.done){g.rotation.y=elapsed*.8+i;g.userData.glow.intensity=.45+Math.sin(elapsed*2.2+i)*.15}});
+const d=new Date(0,0,0,23,53,Math.floor(elapsed));document.querySelector('#clock').textContent=d.toLocaleTimeString('en-US');
+renderer.render(scene,camera)});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script>
+</body></html>
